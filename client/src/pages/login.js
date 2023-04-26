@@ -17,15 +17,6 @@ export default function LoginPage() {
         <img src="https://upload.wikimedia.org/wikipedia/commons/1/1f/New_Emblem_of_Nepal_Red.png" alt="Government of Nepal" style={{ width: "100px", height: "80px" }} />
 
         <h2>{isAdmin ? 'Admin Login' : 'User Login'}</h2>
-        <label>
-          Username:
-          <input type="text" />
-        </label>
-        <label>
-          Password:
-          <input type="password" />
-        </label>
-        <button type="submit">Login</button>
         <div className={styles.toggleContainer}>
           <span>User</span>
           <label className={styles.switch}>
@@ -34,7 +25,19 @@ export default function LoginPage() {
           </label>
           <span>Admin</span>
         </div>
+        <label>
+          Email:
+          <input type="text" />
+        </label>
+        <label>
+          Password:
+          <input type="password" />
+        </label>
+        <button type="submit">Login</button>  <span> <p>Forget password</p></span>
+     
+
       </form>
+
     </div>
   );
 }
