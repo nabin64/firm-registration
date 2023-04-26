@@ -61,14 +61,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.post('/register', async (req, res) => {
     try {
-        const { fullName, address, mobileNo, email, pan, password, isAdmin } = req.body;
+        console.log(req.body)
+        const { fullName, address, mobileNo, email, password, userType } = req.body;
         const newUser = new User({
-            fullName: fullName.value,
-            address: address.value,
-            mobileNo: mobileNo.value,
-            email: email.value,
-            password: password.value,
-            userType: isAdmin ? 'admin' : 'user',
+            fullName,
+            address,
+            mobileNo,
+            email,
+            password,
+            userType: userType || 'user',
         });
         await newUser.save();
         res.send({ message: 'User created successfully!' });
@@ -77,5 +78,10 @@ app.post('/register', async (req, res) => {
         res.status(500).send({ message: 'Error creating user!' });
     }
 });
+
+
+
+
+
 
 app.listen(port, () => console.log(`Server listening on port ${port}`));
