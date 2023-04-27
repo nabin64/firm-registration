@@ -61,7 +61,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.post('/register', async (req, res) => {
     try {
-        console.log(req.body)
+       
         const { fullName, address, mobileNo, email, password, userType } = req.body;
         const newUser = new User({
             fullName,
@@ -75,11 +75,27 @@ app.post('/register', async (req, res) => {
         res.send({ message: 'User created successfully!' });
        
     } catch (err) {
-        console.log(err);
+    
         res.status(500).send({ message: 'Error creating user!' });
     }
 });
 
+
+
+app.post('/login', async (req, res) => {
+    try {
+      const { email, password, userType } = req.body;
+      const user = await User.findOne({ email, password, userType });
+      if (user) {
+        res.send({ success: true });
+      } else {
+        res.send({ success: false, message: 'Invalid email or password!' });
+      }
+    } catch (err) {
+      console.log(err);
+      res.status(500).send({ success: false, message: 'Error logging in!' });
+    }
+  });
 
 
 

@@ -102,3 +102,19 @@ input:checked + .slider:before {
   -ms-transform: translateX(26px);
   transform: translateX(26px);
 }
+.linksContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.forgetUserContainer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.createUser {
+  margin-left: 10px;
+}
