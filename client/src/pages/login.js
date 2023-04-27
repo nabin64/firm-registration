@@ -34,7 +34,7 @@ export default function LoginPage() {
           <input type="password" />
         </label>
         <button type="submit">Login</button>  <span> <p>Forget password</p></span>
-     
+
 
       </form>
 

@@ -73,6 +73,7 @@ app.post('/register', async (req, res) => {
         });
         await newUser.save();
         res.send({ message: 'User created successfully!' });
+       
     } catch (err) {
         console.log(err);
         res.status(500).send({ message: 'Error creating user!' });

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import styles from '../styles/Registration.module.css';
+import { useRouter } from 'next/router';
 
 class User {
     constructor({ fullName, address, mobileNo, email, password, userType }) {
@@ -14,6 +15,7 @@ class User {
 
 const RegistrationPage = () => {
     const [isAdmin, setIsAdmin] = useState(false);
+    const router = useRouter();
 
     const handleToggle = () => {
         setIsAdmin(!isAdmin);
@@ -41,6 +43,7 @@ const RegistrationPage = () => {
             });
             const data = await response.text();
             console.log(data);
+            router.push('/login'); // Redirect to login page after successful registration
         } catch (err) {
             console.log(err);
         }
