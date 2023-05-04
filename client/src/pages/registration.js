@@ -1,201 +1,116 @@
-// import { useState } from 'react';
-// import styles from '../styles/Registration.module.css';
-// import { useRouter } from 'next/router';
-
-// class User {
-//     constructor({ fullName, address, mobileNo, email, password, userType }) {
-//         this.fullName = fullName;
-//         this.address = address;
-//         this.mobileNo = mobileNo;
-//         this.email = email;
-//         this.password = password;
-//         this.userType = userType;
-//     }
-// }
-
-// const RegistrationPage = () => {
-//     const [isAdmin, setIsAdmin] = useState(false);
-//     const router = useRouter();
-
-//     const handleToggle = () => {
-//         setIsAdmin(!isAdmin);
-//         console.log(isAdmin)
-//     };
-
-//     const handleSubmit = async (e) => {
-//         e.preventDefault();
-//         const { fullName, address, mobileNo, email, password } = e.target;
-//         const newUser = new User({
-//             fullName: fullName.value,
-//             address: address.value,
-//             mobileNo: mobileNo.value,
-//             email: email.value,
-//             password: password.value,
-//             userType: isAdmin ? 'admin' : 'user',
-//         });
-//         try {
-//             const response = await fetch('http://localhost:4000/register', {
-//                 method: 'POST',
-//                 headers: {
-//                     'Content-Type': 'application/json',
-//                 },
-//                 body: JSON.stringify(newUser),
-//             });
-//             const data = await response.text();
-//             console.log(data);
-//             router.push('/login'); // Redirect to login page after successful registration
-//         } catch (err) {
-//             console.log(err);
-//         }
-//     };
-
-//     return (
-//         <div className={styles.container}>
-//             <form className={styles.Home_form} onSubmit={handleSubmit}>
-//                 <img
-//                     src="https://upload.wikimedia.org/wikipedia/commons/1/1f/New_Emblem_of_Nepal_Red.png"
-//                     alt="Government of Nepal"
-//                     style={{ width: '100px', height: '80px' }}
-//                 />
-
-//                 <div className={styles.toggleContainer}>
-//                     <span>User</span>
-//                     <label className={styles.switch}>
-//                         <input type="checkbox" checked={isAdmin} onChange={handleToggle} />
-//                         <span className={styles.slider}></span>
-//                     </label>
-//                     <span>Admin</span>
-//                 </div>
-
-//                 <h2>{isAdmin ? 'Admin Registration' : 'User Registration'}</h2>
-
-//                 <input type="text" className={styles.Home_input} name="fullName" placeholder="Full Name" />
-//                 <input type="text" className={styles.Home_input} name="address" placeholder="Address" />
-//                 <input type="text" className={styles.Home_input} name="mobileNo" placeholder="Mobile No" />
-//                 <input type="email" className={styles.Home_input} name="email" placeholder="Email address" style={{ width: '365px' }} />
-//                 <input type="password" className={styles.Home_input} name="password" placeholder="Password" />
-
-//                 <button type="submit">Register Now</button>
-//             </form>
-//         </div>
-//     );
-// };
-
-// export default RegistrationPage;
-
-import { useState } from 'react';
-import styles from '../styles/Registration.module.css';
-import { useRouter } from 'next/router';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import React from 'react';
+import { Formik, Form, Field, yupToFormErrors } from 'formik';
 import * as Yup from 'yup';
+import Link from 'next/link'
+import { Button, message } from 'antd';
+import styles from '../styles/registration.module.css';
+import { useRouter } from 'next/router';
+const SignupSchema = Yup.object().shape({
+    fullName: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!').required('Required'),
+    address: Yup.string().min(2, 'Too Short!').max(50, 'Too Long').required('required'),
+    password: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!').required('Required'),
+    phoneNumber: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!').required('Required'),
+    confirmPassword: Yup.string().oneOf([Yup.ref("password"), null], "Passwords must match"),
+    role: Yup.string().required('Required')
+});
 
-class User {
-    constructor({ fullName, address, mobileNo, email, password, userType }) {
-        this.fullName = fullName;
-        this.address = address;
-        this.mobileNo = mobileNo;
-        this.email = email;
-        this.password = password;
-        this.userType = userType;
-    }
-}
 
-const RegistrationPage = () => {
-    const [isAdmin, setIsAdmin] = useState(false);
+const Register = () => {
     const router = useRouter();
-
-    const handleToggle = () => {
-        setIsAdmin(!isAdmin);
-        console.log(isAdmin)
-    };
-
-    const initialValues = {
-        fullName: '',
-        address: '',
-        mobileNo: '',
-        email: '',
-        password: '',
-    };
-
-    const validationSchema = Yup.object({
-        fullName: Yup.string().required('Required'),
-        address: Yup.string().required('Required'),
-        mobileNo: Yup.string().required('Required').length(10, 'Mobile number must be exactly 10 digits long'),
-        email: Yup.string().email('Invalid email address').required('Required'),
-        password: Yup.string().required('Required'),
-    });
-
-    const handleSubmit = async (values) => {
-        const newUser = new User({
-            fullName: values.fullName,
-            address: values.address,
-            mobileNo: values.mobileNo,
-            email: values.email,
-            password: values.password,
-            userType: isAdmin ? 'admin' : 'user',
-        });
+    const [messageApi, contextHolder] = message.useMessage();
+    const registerUser = async (values) => {
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(values)
+        };
         try {
-            const response = await fetch('http://localhost:4000/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(newUser),
-            });
-            const data = await response.text();
-            console.log(data);
-            router.push('/login'); // Redirect to login page after successful registration
-        } catch (err) {
-            console.log(err);
+            const res = await fetch('http://localhost:4000/register', requestOptions)
+            const data = await res.json()
+            if (res && data.success) {
+                messageApi.success(data.msg)
+                router.push('/')
+            } else {
+                messageApi.error(data.msg)
+            }
+
+        } catch (error) {
+            messageApi.warning(data.msg)
+
         }
-    };
+    }
 
     return (
         <div className={styles.container}>
-            <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleSubmit}>
-                {(formik) => (
+
+            <Formik
+                initialValues={{
+                    fullName: '',
+                    address: '',
+                    phoneNumber: '',
+                    password: '',
+                    confirmPassword: '',
+                    role: ''
+                }}
+
+
+
+                validationSchema={SignupSchema}
+                onSubmit={values => {
+                    // same shape as initial values
+                    registerUser(values)
+
+                }}
+            >
+                {({ errors, touched }) => (
                     <Form className={styles.Home_form}>
                         <img
                             src="https://upload.wikimedia.org/wikipedia/commons/1/1f/New_Emblem_of_Nepal_Red.png"
                             alt="Government of Nepal"
                             style={{ width: '100px', height: '80px' }}
                         />
+                        <h1>Register your user </h1>
+                        <Field className={styles.Home_input} name="fullName" placeholder="Full Name" />
+                        {errors.fullName && touched.fullName ? (
+                            <div>{errors.fullName}</div>
+                        ) : null}
 
-                        <div className={styles.toggleContainer}>
-                            <span>User</span>
-                            <label className={styles.switch}>
-                                <Field type="checkbox" name="userType" checked={isAdmin} onChange={handleToggle} />
-                                <span className={styles.slider}></span>
-                            </label>
-                            <span>Admin</span>
-                        </div>
+                        <Field className={styles.Home_input} name="address" placeholder="Address" />
+                        {errors.address && touched.address ? (
+                            <div>{errors.address}</div>
+                        ) : null}
 
-                        <h2>{isAdmin ? 'Admin Registration' : 'User Registration'}</h2>
+                        <Field className={styles.Home_input} name="phoneNumber" placeholder="phoneNumber" />
+                        {errors.phoneNumber && touched.phoneNumber ? <div>{errors.phoneNumber}</div> : null}
 
-                        <Field type="text" className={styles.Home_input} name="fullName" placeholder="Full Name" />
-                        <ErrorMessage name="fullName" />
+                        <Field className={styles.Home_input} name="password" placeholder="Password" />
+                        {errors.password && touched.password ? (
+                            <div>{errors.password}</div>
+                        ) : null}
 
-                        <Field type="text" className={styles.Home_input} name="address" placeholder="Address" />
-                        <ErrorMessage name="address" />
 
-                        <Field type="text" className={styles.Home_input} name="mobileNo" placeholder="Mobile No" />
-                        <ErrorMessage name="mobileNo" />
+                        <Field className={styles.Home_input} name="confirmPassword" placeholder="Confirm password" />
+                        {errors.confirmPassword && touched.confirmPassword ? (
+                            <div>{errors.confirmPassword}</div>
+                        ) : null}
 
-                        <Field type="email" className={styles.Home_input} name="email" placeholder="Email address" style={{ width: '365px' }} />
-                        <ErrorMessage name="email" />
+                        <Field className={styles.Home_input} as="select" name="role">
+                            <option value="">Select a role</option>
+                            <option value="admin">Admin</option>
+                            <option value="ward">Ward</option>
+                            <option value="firm">Firm</option>
+                        </Field>
+                        {errors.role && touched.role ? <div>{errors.role}</div> : null}
 
-                        <Field type="password" className={styles.Home_input} name="passworda" placeholder="Password"
-                        />
-                        <ErrorMessage name="password" />
 
-                        <button type="submit" disabled={!formik.isValid || formik.isSubmitting}>
-                            {formik.isSubmitting ? 'Submitting...' : 'Register Now'}
-                        </button>
+                        <button type="submit">Submit</button>
+                        Already have an account yet? <Link href="/">Login</Link> instead
                     </Form>
                 )}
             </Formik>
+            {contextHolder}
         </div>
     );
 }
 
-    export default RegistrationPage;
+export default Register

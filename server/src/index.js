@@ -1,21 +1,20 @@
-// server.js
-const express = require('express');
-const app = express();
+const express = require('express')
 const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
-const cors = require('cors');
+const cors = require('cors')
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const saltRounds = 10;
+const app = express()
+const port = 4000
+app.use(cors())
+const JWT_SECRET = 'mysecret';
 
-
-
-app.use(cors());
-
-const port = 4000;
 
 const connectToDb = async () => {
     try {
         const connection = await mongoose.connect('mongodb://127.0.0.1:27017/firm-registration');
         if (connection) {
-            console.log('connected to mongo');
+            console.log('connected to mongodb');
         }
     } catch (err) {
         console.log(err);
@@ -25,80 +24,60 @@ const connectToDb = async () => {
 connectToDb();
 
 const userSchema = new mongoose.Schema({
-    fullName: {
-        type: String,
-        required: true,
-    },
-    address: {
-        type: String,
-        required: true,
-    },
-    mobileNo: {
-        type: String,
-        required: true,
-    },
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-    },
-
-    password: {
-        type: String,
-        required: true,
-    },
-    userType: {
-        type: String,
-        enum: ['admin', 'user'],
-        default: 'user',
-    },
+    fullName: String,
+    address: String,
+    phoneNumber: String,
+    password: String,
+    role: String,
 });
 
-const User = mongoose.model('User', userSchema);
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+
+const Users = mongoose.model('Users', userSchema);
+
+console.log("connected to database")
+app.use(express.json())
+
 
 app.post('/register', async (req, res) => {
-    try {
-       
-        const { fullName, address, mobileNo, email, password, userType } = req.body;
-        const newUser = new User({
-            fullName,
-            address,
-            mobileNo,
-            email,
-            password,
-            userType: userType || 'user',
-        });
-        await newUser.save();
-        res.send({ message: 'User created successfully!' });
-       
-    } catch (err) {
-    
-        res.status(500).send({ message: 'Error creating user!' });
+
+    const data = await Users.findOne({ phoneNumber: req.body.phoneNumber })
+
+    if (data) {
+        res.json({
+            msg: "Already exist",
+            success: false
+        })
+    } else {
+        const hash = await bcrypt.hash(req.body.password, saltRounds)
+
+        if (hash) {
+            req.body.password = hash
+            const data = await Users.create(req.body)
+            if (data) {
+                res.json({ msg: "Register success", success: true })
+            }
+        }
     }
-});
 
-
-
+})
 app.post('/login', async (req, res) => {
-    try {
-      const { email, password, userType } = req.body;
-      const user = await User.findOne({ email, password, userType });
-      if (user) {
-        res.send({ success: true });
-      } else {
-        res.send({ success: false, message: 'Invalid email or password!' });
-      }
-    } catch (err) {
-      console.log(err);
-      res.status(500).send({ success: false, message: 'Error logging in!' });
+    const data = await Users.findOne({ phoneNumber: req.body.phoneNumber })
+    if (data) {
+        const isMatched = bcrypt.compare(req.body.password, data.password)
+        if (isMatched) {
+            const token = jwt.sign({ id: data._id }, JWT_SECRET, { expiresIn: '1h' });
+            res.json({ msg: "login success", success: true, token })
+
+        } else {
+            res.json({ msg: "login failed", success: false })
+        }
     }
-  });
+
+})
 
 
 
-
-
-app.listen(port, () => console.log(`Server listening on port ${port}`));
+app.listen(port, () => {
+    console.log(`Example app listening on port ${port}`)
+})

@@ -1,72 +1,58 @@
 import { useState } from 'react';
-import { useRouter } from 'next/router'; // import useHistory hook from react-router-dom
+import { useRouter } from 'next/router';
 import styles from '../styles/LoginPage.module.css';
 import Link from 'next/link';
+import { message } from 'antd';
 
-export default function LoginPage() {
+const Home = () => {
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [password, setPassword] = useState('');
+  const [messageApi, contextHolder] = message.useMessage();
   const router = useRouter();
 
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const handleLogin = async (e) => {
+    e.preventDefault();
 
-  const handleToggle = () => {
-    setIsAdmin(!isAdmin);
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    // send login data to the server for verification
-    const response = await fetch('http://localhost:4000/login', {
+    const requestOptions = {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password, userType: isAdmin ? 'admin' : 'user' }),
-    });
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phoneNumber: phoneNumber, password: password })
+    };
 
-    const data = await response.json();
+    const res = await fetch('http://localhost:4000/login', requestOptions);
+    const data = await res.json()
 
-    if (data.success) {
-      // if login successful, redirect to another page
-      router.push('/registration'); // Red
-    } else {
-      // show error message
-      alert(data.message);
+    try {
+      if (res && data.success) {
+        messageApi.success(data.msg);
+      } else {
+        messageApi.error(data.msg);
+      }
+    } catch (error) {
+      messageApi.warning(data.msg);
     }
   };
 
   return (
     <div className={styles.container}>
-      <form className={styles.login} onSubmit={handleSubmit}>
+      <form className={styles.login} onSubmit={handleLogin}>
         <img
           src="https://upload.wikimedia.org/wikipedia/commons/1/1f/New_Emblem_of_Nepal_Red.png"
           alt="Government of Nepal"
           style={{ width: '100px', height: '80px' }}
         />
-
-        <h2>{isAdmin ? 'Admin Login' : 'User Login'}</h2>
-        <div className={styles.toggleContainer}>
-          <span>User</span>
-          <label className={styles.switch}>
-            <input type="checkbox" checked={isAdmin} onChange={handleToggle} />
-            <span className={styles.slider}></span>
-          </label>
-          <span>Admin</span>
-        </div>
         <label>
-          Email:
-          <input type="text" value={email} onChange={(event) => setEmail(event.target.value)} />
+          Phone Number:
+          <input type="text" onChange={(e) => setPhoneNumber(e.target.value)} />
         </label>
         <label>
           Password:
-          <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
+          <input type="password" onChange={(e) => setPassword(e.target.value)} />
         </label>
         <button type="submit">Login</button>
         <div className={styles.forgetUserContainer}>
-          <Link href ="/forgetpassword">
-          <h3>Forget password</h3>
+          <Link href="/forgetpassword">
+            <h3>Forget password</h3>
           </Link>
           <span className={styles.createUser}>
             <Link href="/registration">
@@ -75,6 +61,9 @@ export default function LoginPage() {
           </span>
         </div>
       </form>
+      {contextHolder}
     </div>
   );
 }
+
+export default Home;
